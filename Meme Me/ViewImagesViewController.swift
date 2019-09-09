@@ -17,9 +17,10 @@ struct Meme {
 
 
 class ViewImagesViewController: UIViewController {
-
+    
     
     // MARK: - Prop
+    
     
     
     // MARK: - IBOutlet
@@ -35,10 +36,10 @@ class ViewImagesViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         setupTextField()
-       SettingUpKeyboardNotifications()
-    
+        SettingUpKeyboardNotifications()
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -53,7 +54,7 @@ class ViewImagesViewController: UIViewController {
     }
     
     
-
+    
     // MARK: - IBActions
     
     @IBAction func shareButtonPressed(_ sender: UIBarButtonItem) {
@@ -61,9 +62,19 @@ class ViewImagesViewController: UIViewController {
         let shareView = UIActivityViewController(activityItems: [generateMemedImage()], applicationActivities: nil)
         shareView.popoverPresentationController?.sourceView = self.view
         
-        self.present(shareView, animated: true) {
+        shareView.completionWithItemsHandler = {(activityType: UIActivity.ActivityType?, completed: Bool,returnedItems: [Any]?, error: Error?) in
+            
+            if !completed {
+                
+                return
+            }
+            
             self.save()
+            
         }
+        
+        self.present(shareView, animated: true, completion: nil)
+        
     }
     
     @IBAction func cancelButtonPressed(_ sender: UIBarButtonItem) {
@@ -99,19 +110,23 @@ class ViewImagesViewController: UIViewController {
     
     private func generateMemedImage() -> UIImage {
         
-        navigationController?.setNavigationBarHidden(true, animated: false)
-        toolBarView.isHidden = true
         
+        hideTopAndBottomBars(true)
         
         UIGraphicsBeginImageContext(self.view.frame.size)
         view.drawHierarchy(in: self.view.frame, afterScreenUpdates: true)
         let memedImage : UIImage = UIGraphicsGetImageFromCurrentImageContext()!
         UIGraphicsEndImageContext()
         
-        navigationController?.setNavigationBarHidden(false, animated: false)
-        toolBarView.isHidden = false
+        hideTopAndBottomBars(false)
         
         return memedImage
+    }
+    
+    private func hideTopAndBottomBars(_ hide: Bool) {
+        navigationController?.setNavigationBarHidden(hide, animated: false)
+        toolBarView.isHidden = hide
+        
     }
     
     
@@ -139,7 +154,7 @@ class ViewImagesViewController: UIViewController {
         self.view.endEditing(true)
     }
     
-
+    
 }
 
 
@@ -150,7 +165,7 @@ extension ViewImagesViewController: UIImagePickerControllerDelegate , UINavigati
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         
         if let image = info[.originalImage] as? UIImage  {
-           imageViewOutlet.image = image
+            imageViewOutlet.image = image
             shareButtonOutlet.isEnabled = true
             
         }
@@ -184,11 +199,11 @@ extension ViewImagesViewController : UITextFieldDelegate {
 
 extension ViewImagesViewController {
     func SettingUpKeyboardNotifications() {
-        NotificationCenter.default.addObserver(self, selector: #selector(ViewImagesViewController.ShowKeyboard(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(ViewImagesViewController.Hidekeyboard(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(ViewImagesViewController.showKeyboard(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(ViewImagesViewController.hidekeyboard(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
-    @objc func ShowKeyboard(notification : Notification){
+    @objc func showKeyboard(notification : Notification){
         if let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
             UIView.animate(withDuration: 0.3, delay: 0, options: [], animations: {[weak self] in
                 self?.buttonImageView.constant += keyboardSize.height
@@ -197,15 +212,15 @@ extension ViewImagesViewController {
         }
     }
     
-    @objc func Hidekeyboard(notification : Notification) {
+    @objc func hidekeyboard(notification : Notification) {
         if let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
             UIView.animate(withDuration: 0.3, delay: 0, options: [], animations: {[weak self] in
                 self?.buttonImageView.constant -= keyboardSize.height
                 self?.view.layoutIfNeeded()
                 }, completion: nil)
         }
-}
-
+    }
+    
 }
 
 
